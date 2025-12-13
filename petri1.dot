@@ -1,0 +1,29 @@
+digraph G {
+  rankdir=TB;
+
+  // места
+  p1 [shape=circle];
+  p2 [shape=circle];
+  p3 [shape=circle];
+  p4 [shape=circle];
+
+  // переходы
+  t1 [shape=box];
+  t2 [shape=box];
+  t3 [shape=box];
+
+  p1 -> t1;
+  p1 -> t2;
+
+  t1 -> p1;
+  t1 -> p2;
+
+  t2 -> p3;
+
+  p2 -> t3;
+
+  p3 -> t3;
+
+  t3 -> p3;
+  t3 -> p4;
+}

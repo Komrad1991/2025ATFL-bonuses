@@ -1,0 +1,30 @@
+digraph DFA5_OneState {
+    rankdir=LR;
+    node [shape = circle];
+
+    # Начальное состояние
+    q0 [style=bold];
+
+    # Все состояния принимающие
+    q0 [shape=doublecircle];
+    q1 [shape=doublecircle];
+    q2 [shape=doublecircle];
+    q3 [shape=doublecircle];
+    q4 [shape=doublecircle];
+
+    # Переходы: все состояния ведут друг к другу одинаково
+    q0 -> q1 [label="a"];
+    q0 -> q2 [label="b"];
+
+    q1 -> q3 [label="a"];
+    q1 -> q4 [label="b"];
+
+    q2 -> q3 [label="a"];
+    q2 -> q4 [label="b"];
+
+    q3 -> q0 [label="a"];
+    q3 -> q1 [label="b"];
+
+    q4 -> q2 [label="a"];
+    q4 -> q0 [label="b"];
+}
