@@ -297,7 +297,127 @@ class Bonuses
     { dot: dot_file, png: png_file }
   end
 
+  def clear_grammar(input_file)
+    dir = File.dirname(input_file)
+    base = File.basename(input_file, ".*")
+    ext = File.extname(input_file)
+    output_file = File.join(dir, "#{base}_cleaned#{ext}")
 
+    grammar = {}
+
+    File.readlines(input_file).each do |line|
+      line.strip!
+      next if line.empty? || line.start_with?('#')
+
+      if line.include?('->')
+        left, right = line.split('->', 2)
+        nonterm = left.strip
+        productions = right.strip.split('|').map(&:strip)
+
+        grammar[nonterm] ||= []
+        grammar[nonterm].concat(productions)
+      end
+    end
+
+    terminal = ->(ch) { ch.match?(/[a-z]|\d|\+|\-|\*|\/|\(|\)|:|,|;|\s/) }
+
+    f = Set.new
+    q = []
+
+    is_all_in_f = ->(s) do
+      s.chars.all? do |ch|
+        terminal.call(ch) || f.include?(ch)
+      end
+    end
+
+    grammar.each do |nonterm, productions|
+      productions.each do |prod|
+        if prod.chars.all? { |ch| terminal.call(ch) }
+          f.add(nonterm)
+          q << nonterm
+          break
+        end
+      end
+    end
+
+    until q.empty?
+      p = q.shift
+
+      grammar.each do |nonterm, productions|
+        next if f.include?(nonterm)
+
+        productions.each do |prod|
+          if is_all_in_f.call(prod)
+            f.add(nonterm)
+            q << nonterm
+            break
+          end
+        end
+      end
+    end
+
+    result1 = {}
+    grammar.each do |nonterm, productions|
+      if f.include?(nonterm)
+        result1[nonterm] ||= []
+        productions.each do |prod|
+          valid = true
+          prod.chars.each do |ch|
+            if !terminal.call(ch) && !f.include?(ch)
+              valid = false
+              break
+            end
+          end
+          result1[nonterm] << prod if valid
+        end
+      end
+    end
+
+    grammar = result1
+
+    reachable = Set.new(['S'])
+    q = ['S']
+
+    until q.empty?
+      a = q.shift
+      (grammar[a] || []).each do |prod|
+        prod.chars.each do |ch|
+          if !terminal.call(ch) && !reachable.include?(ch)
+            reachable.add(ch)
+            q << ch
+          end
+        end
+      end
+    end
+
+    result2 = {}
+    reachable.each do |nonterm|
+      next unless grammar.key?(nonterm)
+
+      grammar[nonterm].each do |prod|
+        valid = prod.chars.all? do |ch|
+          terminal.call(ch) || reachable.include?(ch)
+        end
+
+        if valid
+          result2[nonterm] ||= []
+          result2[nonterm] << prod
+        end
+      end
+    end
+
+    grammar = result2
+
+    File.open(output_file, 'w') do |file|
+      grammar.sort.each do |nonterm, productions|
+        unless productions.empty?
+          file.puts("#{nonterm} -> #{productions.join(' | ')}")
+        end
+      end
+    end
+
+    output_file
+  end
 end
 
 check = Bonuses.new
@@ -309,3 +429,4 @@ marking = {
 }
 check.petri_cover("petri1.dot", marking)
 check.minimize('correct.dot')
+check.clear_grammar("bad_grammar.txt")
